@@ -1492,6 +1492,1317 @@
             </button>
           `;
         });
+        <!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Virtual Kalorimetri - Coffee Cup Calorimeter</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pour {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(100px) rotate(-45deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        
+        @keyframes bubble {
+            0% { transform: translateY(0) scale(0.5); opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+        }
+        
+        @keyframes stir {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        @keyframes fillLiquid {
+            from { height: 0%; }
+            to { height: var(--fill-height); }
+        }
+        
+        @keyframes mercuryRise {
+            from { height: 0%; }
+            to { height: var(--mercury-height); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        .equipment-draggable {
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+        
+        .equipment-draggable:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+        
+        .equipment-draggable:active {
+            cursor: grabbing;
+        }
+        
+        .step-indicator {
+            transition: all 0.4s ease;
+        }
+        
+        .step-indicator.active {
+            transform: scale(1.1);
+        }
+        
+        .step-indicator.completed {
+            opacity: 0.6;
+        }
+        
+        .liquid-fill {
+            animation: fillLiquid 2s ease-out forwards;
+        }
+        
+        .mercury-rise {
+            animation: mercuryRise 1.5s ease-out forwards;
+        }
+        
+        .bubble-animation {
+            animation: bubble 3s ease-out infinite;
+        }
+        
+        .stir-animation {
+            animation: stir 2s linear infinite;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            background: linear-gradient(to right, #dbeafe 0%, #3b82f6 100%);
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        input[type="range"]::-moz-range-track {
+            background: linear-gradient(to right, #dbeafe 0%, #3b82f6 100%);
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .worksheet-section {
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+        }
+        
+        .worksheet-section:hover {
+            border-left-color: #1e40af;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .error-indicator {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .error-indicator::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .calculation-box {
+            font-family: 'Courier New', monospace;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .result-correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+        
+        .result-incorrect {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        
+        .lab-table {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full overflow-auto"></div>
+  <script>
+        const defaultConfig = {
+            background_color: "#f0f4f8",
+            surface_color: "#ffffff",
+            text_color: "#1e293b",
+            primary_action: "#3b82f6",
+            secondary_action: "#0ea5e9",
+            font_family: "system-ui",
+            font_size: 16,
+            lab_title: "Laboratorium Virtual Kalorimetri",
+            institution_name: "Kimia SMA - Fase E",
+            instruction_text: "Ikuti langkah-langkah praktikum untuk mengukur perubahan entalpi reaksi"
+        };
+
+        let currentStep = 1;
+        let experimentData = {
+            reactionType: 'netralisasi',
+            volume1: 50,
+            volume2: 50,
+            concentration1: 1.0,
+            concentration2: 1.0,
+            tempInitial1: 25,
+            tempInitial2: 25,
+            tempFinal: 0,
+            isRunning: false,
+            isPoured: false,
+            isStirring: false,
+            results: null,
+            temperatureData: [],
+            startTime: 0
+        };
+
+        let worksheetData = {
+            observations: '',
+            calculations: '',
+            reflections: '',
+            errors_identified: []
+        };
+
+        const reactions = {
+            netralisasi: {
+                name: 'Netralisasi: HCl + NaOH',
+                reactant1: 'HCl',
+                reactant2: 'NaOH',
+                equation: 'HCl(aq) + NaOH(aq) → NaCl(aq) + H₂O(l)',
+                expectedDH: -57.3,
+                type: 'eksoterm',
+                color1: '#ff6b6b',
+                color2: '#4ecdc4',
+                colorMix: '#ffd93d',
+                description: 'Reaksi eksoterm yang melepaskan kalor saat asam bereaksi dengan basa'
+            },
+            pengenceran: {
+                name: 'Pengenceran H₂SO₄ Pekat',
+                reactant1: 'H₂SO₄ pekat',
+                reactant2: 'H₂O',
+                equation: 'H₂SO₄(pekat) + H₂O(l) → H₂SO₄(encer)',
+                expectedDH: -95.3,
+                type: 'eksoterm',
+                color1: '#8b4513',
+                color2: '#87ceeb',
+                colorMix: '#cd853f',
+                description: 'Reaksi sangat eksoterm - selalu tambahkan asam ke air!'
+            },
+            pelarutan: {
+                name: 'Pelarutan NH₄NO₃ dalam Air',
+                reactant1: 'NH₄NO₃',
+                reactant2: 'H₂O',
+                equation: 'NH₄NO₃(s) + H₂O(l) → NH₄⁺(aq) + NO₃⁻(aq)',
+                expectedDH: 25.7,
+                type: 'endoterm',
+                color1: '#ffffff',
+                color2: '#87ceeb',
+                colorMix: '#b0e0e6',
+                description: 'Reaksi endoterm yang menyerap kalor - campuran menjadi dingin'
+            }
+        };
+
+        async function initDataSdk() {
+            const dataHandler = {
+                onDataChanged(data) {
+                    // Data stored successfully
+                }
+            };
+
+            const result = await window.dataSdk.init(dataHandler);
+            if (!result.isOk) {
+                console.error("Failed to initialize data SDK");
+            }
+        }
+
+        async function saveExperiment() {
+            if (!experimentData.results) return;
+
+            const result = await window.dataSdk.create({
+                id: Date.now().toString(),
+                experiment_type: experimentData.reactionType,
+                volume1: experimentData.volume1,
+                volume2: experimentData.volume2,
+                concentration1: experimentData.concentration1,
+                concentration2: experimentData.concentration2,
+                temp_initial1: experimentData.tempInitial1,
+                temp_initial2: experimentData.tempInitial2,
+                temp_final: experimentData.tempFinal,
+                calculated_q: experimentData.results.q,
+                calculated_delta_h: experimentData.results.deltaH,
+                error_percentage: experimentData.results.error,
+                completed_at: new Date().toISOString(),
+                student_notes: worksheetData.observations + ' | ' + worksheetData.reflections
+            });
+
+            if (result.isOk) {
+                showNotification('✅ Hasil eksperimen tersimpan!', 'success');
+            } else {
+                showNotification('❌ Gagal menyimpan hasil', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-xl text-white z-50 fade-in ${
+                type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.style.fontFamily = (window.elementSdk?.config || defaultConfig).font_family;
+            notification.style.fontSize = `${(window.elementSdk?.config || defaultConfig).font_size * 0.9}px`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+
+        function render() {
+            const config = window.elementSdk?.config || defaultConfig;
+            const app = document.getElementById('app');
+            
+            const baseFont = config.font_size || defaultConfig.font_size;
+            const fontStack = `${config.font_family || defaultConfig.font_family}, system-ui, -apple-system, sans-serif`;
+            
+            app.style.fontFamily = fontStack;
+            app.style.fontSize = `${baseFont}px`;
+            app.style.backgroundColor = config.background_color || defaultConfig.background_color;
+            app.style.color = config.text_color || defaultConfig.text_color;
+            
+            const reaction = reactions[experimentData.reactionType];
+            
+            app.innerHTML = `
+                <div class="min-h-full p-6" style="background: linear-gradient(135deg, ${config.background_color} 0%, ${config.surface_color} 100%);">
+                    <div class="max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="mb-6 p-6 rounded-2xl shadow-lg fade-in" style="background-color: ${config.surface_color};">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h1 class="font-bold mb-2" style="font-size: ${baseFont * 2}px; font-family: ${fontStack}; color: ${config.primary_action};">
+                                        🧪 ${config.lab_title || defaultConfig.lab_title}
+                                    </h1>
+                                    <p style="font-size: ${baseFont}px; font-family: ${fontStack}; color: ${config.text_color}; opacity: 0.8;">
+                                        ${config.institution_name || defaultConfig.institution_name}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-3xl mb-2">⚗️</div>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color}; opacity: 0.7;">
+                                        Coffee Cup Calorimeter
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Steps -->
+                        <div class="mb-6 p-4 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                            <div class="flex justify-between items-center">
+                                ${[1, 2, 3, 4, 5].map(step => `
+                                    <div class="flex-1 flex items-center">
+                                        <div class="step-indicator ${currentStep === step ? 'active' : ''} ${currentStep > step ? 'completed' : ''} flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all" 
+                                             style="background-color: ${currentStep >= step ? config.primary_action : config.background_color}; 
+                                                    color: ${currentStep >= step ? '#ffffff' : config.text_color}; 
+                                                    font-size: ${baseFont * 1.1}px;
+                                                    border: 3px solid ${currentStep === step ? config.primary_action : '#e2e8f0'};">
+                                            ${currentStep > step ? '✓' : step}
+                                        </div>
+                                        ${step < 5 ? `<div class="flex-1 h-1 mx-2" style="background-color: ${currentStep > step ? config.primary_action : '#e2e8f0'};"></div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="flex justify-between mt-3">
+                                <span style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; width: 20%; text-align: center;">Pilih Reaksi</span>
+                                <span style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; width: 20%; text-align: center;">Atur Parameter</span>
+                                <span style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; width: 20%; text-align: center;">Tuang Larutan</span>
+                                <span style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; width: 20%; text-align: center;">Ukur Suhu</span>
+                                <span style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; width: 20%; text-align: center;">Analisis Data</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Left Panel: Controls -->
+                            <div class="lg:col-span-1 space-y-6">
+                                ${renderStepContent(config, baseFont, fontStack, reaction)}
+                            </div>
+
+                            <!-- Center Panel: Lab Visualization -->
+                            <div class="lg:col-span-1">
+                                ${renderLabVisualization(config, baseFont, fontStack, reaction)}
+                            </div>
+
+                            <!-- Right Panel: Data & Analysis -->
+                            <div class="lg:col-span-1 space-y-6">
+                                ${renderDataPanel(config, baseFont, fontStack, reaction)}
+                            </div>
+                        </div>
+
+                        <!-- Worksheet Section -->
+                        ${currentStep >= 5 ? renderWorksheet(config, baseFont, fontStack) : ''}
+                    </div>
+                </div>
+            `;
+            
+            attachEventListeners();
+        }
+
+        function renderStepContent(config, baseFont, fontStack, reaction) {
+            if (currentStep === 1) {
+                return `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.3}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            1️⃣ Pilih Jenis Reaksi
+                        </h3>
+                        <div class="space-y-3">
+                            ${Object.entries(reactions).map(([key, r]) => `
+                                <button onclick="selectReaction('${key}')" 
+                                        class="w-full p-4 rounded-lg text-left transition-all border-2 ${experimentData.reactionType === key ? 'border-4' : ''}"
+                                        style="background-color: ${experimentData.reactionType === key ? config.primary_action : config.background_color}; 
+                                               color: ${experimentData.reactionType === key ? '#ffffff' : config.text_color};
+                                               border-color: ${experimentData.reactionType === key ? config.primary_action : 'transparent'};
+                                               font-family: ${fontStack}; 
+                                               font-size: ${baseFont * 0.9}px;">
+                                    <div class="font-bold mb-1">${r.name}</div>
+                                    <div style="font-size: ${baseFont * 0.75}px; opacity: 0.8;">${r.description}</div>
+                                    <div class="mt-2 font-mono" style="font-size: ${baseFont * 0.7}px;">${r.equation}</div>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <button onclick="nextStep()" class="w-full mt-6 py-3 rounded-lg font-bold transition-all"
+                                style="background-color: ${config.primary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont * 1.1}px;">
+                            Lanjut ke Pengaturan Parameter →
+                        </button>
+                    </div>
+                    
+                    <div class="p-6 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                        <h4 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                            ℹ️ Informasi Reaksi
+                        </h4>
+                        <div class="space-y-2" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            <p><strong>Jenis:</strong> ${reaction.type === 'eksoterm' ? '🔥 Eksoterm' : '❄️ Endoterm'}</p>
+                            <p><strong>ΔH teoritis:</strong> ${reaction.expectedDH} kJ/mol</p>
+                            <p><strong>Persamaan:</strong></p>
+                            <div class="p-3 rounded bg-gray-50 font-mono text-xs">${reaction.equation}</div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentStep === 2) {
+                return `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.3}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            2️⃣ Atur Parameter Eksperimen
+                        </h3>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block mb-2 font-semibold" style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; color: ${config.text_color};">
+                                    Volume ${reaction.reactant1}: <span id="vol1Display">${experimentData.volume1}</span> mL
+                                </label>
+                                <input type="range" id="volume1" min="25" max="100" step="5" value="${experimentData.volume1}" 
+                                       oninput="updateParameter('volume1', this.value)" class="w-full">
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 font-semibold" style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; color: ${config.text_color};">
+                                    Konsentrasi ${reaction.reactant1}: <span id="conc1Display">${experimentData.concentration1}</span> M
+                                </label>
+                                <input type="range" id="concentration1" min="0.5" max="2.0" step="0.1" value="${experimentData.concentration1}" 
+                                       oninput="updateParameter('concentration1', this.value)" class="w-full">
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 font-semibold" style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; color: ${config.text_color};">
+                                    Volume ${reaction.reactant2}: <span id="vol2Display">${experimentData.volume2}</span> mL
+                                </label>
+                                <input type="range" id="volume2" min="25" max="100" step="5" value="${experimentData.volume2}" 
+                                       oninput="updateParameter('volume2', this.value)" class="w-full">
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 font-semibold" style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; color: ${config.text_color};">
+                                    Konsentrasi ${reaction.reactant2}: <span id="conc2Display">${experimentData.concentration2}</span> M
+                                </label>
+                                <input type="range" id="concentration2" min="0.5" max="2.0" step="0.1" value="${experimentData.concentration2}" 
+                                       oninput="updateParameter('concentration2', this.value)" class="w-full">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="prevStep()" class="flex-1 py-3 rounded-lg font-bold transition-all"
+                                    style="background-color: ${config.background_color}; color: ${config.text_color}; border: 2px solid ${config.primary_action}; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                ← Kembali
+                            </button>
+                            <button onclick="nextStep()" class="flex-1 py-3 rounded-lg font-bold transition-all"
+                                    style="background-color: ${config.primary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                Lanjut →
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                        <h4 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                            📊 Ringkasan Parameter
+                        </h4>
+                        <div class="space-y-2" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            <p><strong>Total Volume:</strong> ${experimentData.volume1 + experimentData.volume2} mL</p>
+                            <p><strong>Mol ${reaction.reactant1}:</strong> ${((experimentData.volume1/1000) * experimentData.concentration1).toFixed(4)} mol</p>
+                            <p><strong>Mol ${reaction.reactant2}:</strong> ${((experimentData.volume2/1000) * experimentData.concentration2).toFixed(4)} mol</p>
+                            <p><strong>Reaktan Pembatas:</strong> ${Math.min((experimentData.volume1/1000) * experimentData.concentration1, (experimentData.volume2/1000) * experimentData.concentration2).toFixed(4)} mol</p>
+                        </div>
+                    </div>
+                `;
+            } else if (currentStep === 3) {
+                return `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.3}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            3️⃣ Tuangkan Larutan
+                        </h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="p-4 rounded-lg" style="background-color: ${config.background_color};">
+                                <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                    📝 Instruksi:
+                                </p>
+                                <ol class="list-decimal list-inside space-y-1" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                    <li>Klik tombol "Tuang Larutan 1" untuk menuangkan ${reaction.reactant1}</li>
+                                    <li>Klik tombol "Tuang Larutan 2" untuk menuangkan ${reaction.reactant2}</li>
+                                    <li>Perhatikan perubahan warna campuran</li>
+                                    <li>Klik "Lanjut" setelah kedua larutan dituang</li>
+                                </ol>
+                            </div>
+                            
+                            <button onclick="pourLiquid(1)" 
+                                    class="w-full py-3 rounded-lg font-bold transition-all ${experimentData.liquid1Poured ? 'opacity-50' : ''}"
+                                    style="background: linear-gradient(135deg, ${reaction.color1} 0%, ${adjustBrightness(reaction.color1, -20)} 100%); color: white; font-family: ${fontStack}; font-size: ${baseFont}px;"
+                                    ${experimentData.liquid1Poured ? 'disabled' : ''}>
+                                ${experimentData.liquid1Poured ? '✓ Larutan 1 Dituang' : '🧪 Tuang Larutan 1 (' + reaction.reactant1 + ')'}
+                            </button>
+                            
+                            <button onclick="pourLiquid(2)" 
+                                    class="w-full py-3 rounded-lg font-bold transition-all ${experimentData.liquid2Poured ? 'opacity-50' : ''}"
+                                    style="background: linear-gradient(135deg, ${reaction.color2} 0%, ${adjustBrightness(reaction.color2, -20)} 100%); color: white; font-family: ${fontStack}; font-size: ${baseFont}px;"
+                                    ${experimentData.liquid2Poured ? 'disabled' : ''}>
+                                ${experimentData.liquid2Poured ? '✓ Larutan 2 Dituang' : '🧪 Tuang Larutan 2 (' + reaction.reactant2 + ')'}
+                            </button>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="prevStep()" class="flex-1 py-3 rounded-lg font-bold transition-all"
+                                    style="background-color: ${config.background_color}; color: ${config.text_color}; border: 2px solid ${config.primary_action}; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                ← Kembali
+                            </button>
+                            <button onclick="nextStep()" 
+                                    class="flex-1 py-3 rounded-lg font-bold transition-all ${!experimentData.liquid1Poured || !experimentData.liquid2Poured ? 'opacity-50' : ''}"
+                                    style="background-color: ${config.primary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont}px;"
+                                    ${!experimentData.liquid1Poured || !experimentData.liquid2Poured ? 'disabled' : ''}>
+                                Lanjut →
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                        <h4 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                            🌡️ Suhu Awal
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: ${config.background_color};">
+                                <span style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">Larutan 1:</span>
+                                <span class="font-bold" style="font-size: ${baseFont}px; font-family: ${fontStack}; color: ${config.primary_action};">${experimentData.tempInitial1}°C</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: ${config.background_color};">
+                                <span style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">Larutan 2:</span>
+                                <span class="font-bold" style="font-size: ${baseFont}px; font-family: ${fontStack}; color: ${config.primary_action};">${experimentData.tempInitial2}°C</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentStep === 4) {
+                return `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.3}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            4️⃣ Ukur Perubahan Suhu
+                        </h3>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="p-4 rounded-lg" style="background-color: ${config.background_color};">
+                                <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                    📝 Instruksi:
+                                </p>
+                                <ol class="list-decimal list-inside space-y-1" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                    <li>Klik "Mulai Pengadukan" untuk mengaduk campuran</li>
+                                    <li>Amati perubahan suhu pada termometer digital</li>
+                                    <li>Perhatikan grafik suhu vs waktu</li>
+                                    <li>Tunggu hingga suhu stabil (±15 detik)</li>
+                                </ol>
+                            </div>
+                            
+                            <button onclick="startStirring()" 
+                                    class="w-full py-4 rounded-lg font-bold transition-all ${experimentData.isStirring ? 'pulse-animation' : ''}"
+                                    style="background-color: ${experimentData.isStirring ? config.secondary_action : config.primary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont * 1.1}px;"
+                                    ${experimentData.isStirring ? 'disabled' : ''}>
+                                ${experimentData.isStirring ? '🌀 Sedang Mengaduk...' : '🥄 Mulai Pengadukan'}
+                            </button>
+                            
+                            ${experimentData.tempFinal > 0 ? `
+                                <div class="p-4 rounded-lg text-center" style="background: linear-gradient(135deg, ${config.primary_action} 0%, ${config.secondary_action} 100%); color: white;">
+                                    <p class="font-bold mb-2" style="font-size: ${baseFont}px; font-family: ${fontStack};">Suhu Akhir Tercatat:</p>
+                                    <p class="text-4xl font-bold">${experimentData.tempFinal.toFixed(2)}°C</p>
+                                    <p class="mt-2" style="font-size: ${baseFont * 0.85}px;">ΔT = ${(experimentData.tempFinal - experimentData.tempInitial1).toFixed(2)}°C</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="prevStep()" class="flex-1 py-3 rounded-lg font-bold transition-all"
+                                    style="background-color: ${config.background_color}; color: ${config.text_color}; border: 2px solid ${config.primary_action}; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                ← Kembali
+                            </button>
+                            <button onclick="nextStep()" 
+                                    class="flex-1 py-3 rounded-lg font-bold transition-all ${experimentData.tempFinal === 0 ? 'opacity-50' : ''}"
+                                    style="background-color: ${config.primary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont}px;"
+                                    ${experimentData.tempFinal === 0 ? 'disabled' : ''}>
+                                Analisis Data →
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (currentStep === 5) {
+                return `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.3}px; font-family: ${fontStack}; color: ${config.text_color};">
+                            5️⃣ Hasil & Analisis
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            ${experimentData.results ? `
+                                <div class="p-4 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_action}20 0%, ${config.secondary_action}20 100%); border: 2px solid ${config.primary_action};">
+                                    <h4 class="font-bold mb-3" style="font-size: ${baseFont}px; font-family: ${fontStack}; color: ${config.primary_action};">
+                                        📊 Hasil Perhitungan
+                                    </h4>
+                                    <div class="space-y-2" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                        <p><strong>Massa total larutan:</strong> ${experimentData.results.mass.toFixed(2)} g</p>
+                                        <p><strong>ΔT (Perubahan Suhu):</strong> ${experimentData.results.deltaT.toFixed(2)}°C</p>
+                                        <p><strong>Kalor (q):</strong> ${experimentData.results.q.toFixed(2)} J</p>
+                                        <p><strong>Mol pembatas:</strong> ${experimentData.results.mol.toFixed(4)} mol</p>
+                                        <p class="text-xl font-bold pt-2" style="color: ${config.primary_action};">
+                                            ΔH reaksi = ${experimentData.results.deltaH.toFixed(2)} kJ/mol
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 rounded-lg" style="background-color: ${config.background_color};">
+                                    <h4 class="font-bold mb-2" style="font-size: ${baseFont}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                        🎯 Perbandingan dengan Teori
+                                    </h4>
+                                    <div class="space-y-2" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                        <p><strong>ΔH Eksperimen:</strong> ${experimentData.results.deltaH.toFixed(2)} kJ/mol</p>
+                                        <p><strong>ΔH Teoritis:</strong> ${reaction.expectedDH} kJ/mol</p>
+                                        <p class="font-bold ${experimentData.results.error < 10 ? 'text-green-600' : experimentData.results.error < 20 ? 'text-yellow-600' : 'text-red-600'}">
+                                            % Error: ${experimentData.results.error.toFixed(2)}%
+                                        </p>
+                                    </div>
+                                    <div class="mt-3 p-3 rounded" style="background-color: ${experimentData.results.error < 10 ? '#dcfce7' : experimentData.results.error < 20 ? '#fef9c3' : '#fee2e2'};">
+                                        <p style="font-size: ${baseFont * 0.8}px; font-family: ${fontStack};">
+                                            ${experimentData.results.error < 10 ? '✅ Hasil sangat baik! Error < 10%' : 
+                                              experimentData.results.error < 20 ? '⚠️ Hasil cukup baik, perhatikan sumber error' : 
+                                              '❌ Error cukup besar, periksa prosedur eksperimen'}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <button onclick="saveExperiment()" class="w-full py-3 rounded-lg font-bold transition-all"
+                                        style="background-color: ${config.secondary_action}; color: white; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                    💾 Simpan Hasil Eksperimen
+                                </button>
+                                
+                                <button onclick="resetExperiment()" class="w-full py-3 rounded-lg font-bold transition-all"
+                                        style="background-color: ${config.background_color}; color: ${config.text_color}; border: 2px solid ${config.primary_action}; font-family: ${fontStack}; font-size: ${baseFont}px;">
+                                    🔄 Ulangi Eksperimen Baru
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderLabVisualization(config, baseFont, fontStack, reaction) {
+            const totalVolume = experimentData.volume1 + experimentData.volume2;
+            const liquidHeight = experimentData.liquid1Poured || experimentData.liquid2Poured ? 
+                                 Math.min((totalVolume / 200) * 60, 60) : 0;
+            
+            let liquidColor = config.background_color;
+            if (experimentData.liquid1Poured && !experimentData.liquid2Poured) {
+                liquidColor = reaction.color1;
+            } else if (!experimentData.liquid1Poured && experimentData.liquid2Poured) {
+                liquidColor = reaction.color2;
+            } else if (experimentData.liquid1Poured && experimentData.liquid2Poured) {
+                liquidColor = reaction.colorMix;
+            }
+            
+            const currentTemp = experimentData.tempFinal > 0 ? experimentData.tempFinal : experimentData.tempInitial1;
+            const mercuryHeight = Math.min(((currentTemp - 10) / 90) * 65, 70);
+            
+            return `
+                <div class="p-6 rounded-xl shadow-lg lab-table">
+                    <h3 class="font-bold mb-4 text-center text-white" style="font-size: ${baseFont * 1.2}px; font-family: ${fontStack};">
+                        ⚗️ Meja Laboratorium
+                    </h3>
+                    
+                    <div class="relative bg-white rounded-xl p-8" style="min-height: 500px;">
+                        <!-- Calorimeter Visualization -->
+                        <svg viewBox="0 0 400 500" class="w-full h-full">
+                            <!-- Kalorimeter Cup -->
+                            <defs>
+                                <linearGradient id="cupGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#f1f5f9;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#cbd5e1;stop-opacity:1" />
+                                </linearGradient>
+                                <filter id="shadow">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.3"/>
+                                </filter>
+                            </defs>
+                            
+                            <!-- Table Surface -->
+                            <rect x="0" y="400" width="400" height="100" fill="#8b7355" opacity="0.3"/>
+                            
+                            <!-- Calorimeter Body -->
+                            <ellipse cx="200" cy="380" rx="90" ry="15" fill="#94a3b8" opacity="0.5"/>
+                            <rect x="110" y="200" width="180" height="180" rx="15" fill="url(#cupGradient)" stroke="#64748b" stroke-width="3" filter="url(#shadow)"/>
+                            
+                            <!-- Liquid -->
+                            ${liquidHeight > 0 ? `
+                                <rect x="115" y="${380 - liquidHeight}" width="170" height="${liquidHeight}" rx="10" fill="${liquidColor}" opacity="0.8">
+                                    ${experimentData.isStirring ? '<animate attributeName="opacity" values="0.8;1;0.8" dur="1s" repeatCount="indefinite"/>' : ''}
+                                </rect>
+                            ` : ''}
+                            
+                            <!-- Bubbles for exothermic reaction -->
+                            ${experimentData.isStirring && reaction.type === 'eksoterm' ? `
+                                <circle cx="150" cy="340" r="4" fill="white" opacity="0.6" class="bubble-animation" style="animation-delay: 0s;"/>
+                                <circle cx="180" cy="350" r="3" fill="white" opacity="0.6" class="bubble-animation" style="animation-delay: 0.5s;"/>
+                                <circle cx="210" cy="345" r="5" fill="white" opacity="0.6" class="bubble-animation" style="animation-delay: 1s;"/>
+                                <circle cx="240" cy="355" r="3" fill="white" opacity="0.6" class="bubble-animation" style="animation-delay: 1.5s;"/>
+                            ` : ''}
+                            
+                            <!-- Stirrer -->
+                            <line x1="200" y1="150" x2="200" y2="360" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="200" cy="145" r="10" fill="${config.primary_action}"/>
+                            <rect x="185" y="340" width="30" height="40" rx="5" fill="#334155" opacity="0.7" 
+                                  ${experimentData.isStirring ? 'class="stir-animation"' : ''} 
+                                  style="transform-origin: 200px 360px;"/>
+                            
+                            <!-- Thermometer -->
+                            <rect x="310" y="220" width="25" height="150" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2" filter="url(#shadow)"/>
+                            <circle cx="322.5" cy="375" r="15" fill="#dc2626"/>
+                            <rect x="313" y="${375 - mercuryHeight}" width="19" height="${mercuryHeight}" rx="9" fill="#ef4444" class="${experimentData.isStirring ? 'mercury-rise' : ''}" style="--mercury-height: ${mercuryHeight}%;"/>
+                            
+                            <!-- Temperature scale -->
+                            ${[20, 40, 60, 80].map(temp => {
+                                const y = 375 - ((temp - 10) / 90 * 65);
+                                return `
+                                    <line x1="305" y1="${y}" x2="310" y2="${y}" stroke="#64748b" stroke-width="1"/>
+                                    <text x="298" y="${y + 4}" text-anchor="end" font-size="10" fill="${config.text_color}">${temp}</text>
+                                `;
+                            }).join('')}
+                            
+                            <!-- Digital Temperature Display -->
+                            <rect x="305" y="180" width="50" height="30" rx="5" fill="#1e293b" stroke="${config.primary_action}" stroke-width="2"/>
+                            <text x="330" y="200" text-anchor="middle" font-size="14" font-weight="bold" fill="#10b981">
+                                ${currentTemp.toFixed(1)}°C
+                            </text>
+                            
+                            <!-- Labels -->
+                            <text x="200" y="420" text-anchor="middle" font-size="14" font-weight="bold" fill="${config.text_color}">
+                                Kalorimeter
+                            </text>
+                            <text x="322.5" y="410" text-anchor="middle" font-size="12" fill="${config.text_color}">
+                                Termometer
+                            </text>
+                        </svg>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDataPanel(config, baseFont, fontStack, reaction) {
+            return `
+                ${currentStep >= 4 ? `
+                    <div class="p-6 rounded-xl shadow-md fade-in" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.2}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                            📈 Grafik Suhu vs Waktu
+                        </h3>
+                        <div class="chart-container">
+                            ${renderTemperatureChart(config, baseFont)}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="p-6 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                    <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.2}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                        🔬 Alat Laboratorium
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        ${[
+                            {icon: '🥤', name: 'Kalorimeter', desc: 'Coffee Cup'},
+                            {icon: '🌡️', name: 'Termometer', desc: 'Digital ±0.1°C'},
+                            {icon: '📏', name: 'Gelas Ukur', desc: '100 mL'},
+                            {icon: '⚖️', name: 'Neraca', desc: 'Digital ±0.01g'},
+                            {icon: '🥄', name: 'Pengaduk', desc: 'Stainless Steel'},
+                            {icon: '🧪', name: 'Botol Reagen', desc: 'Larutan'}
+                        ].map(tool => `
+                            <div class="equipment-draggable p-4 rounded-lg text-center transition-all" style="background-color: ${config.background_color}; border: 2px solid transparent;"
+                                 onmouseover="this.style.borderColor='${config.primary_action}'"
+                                 onmouseout="this.style.borderColor='transparent'">
+                                <div class="text-3xl mb-2">${tool.icon}</div>
+                                <p class="font-semibold" style="font-size: ${baseFont * 0.8}px; font-family: ${fontStack}; color: ${config.text_color};">${tool.name}</p>
+                                <p style="font-size: ${baseFont * 0.7}px; font-family: ${fontStack}; color: ${config.text_color}; opacity: 0.7;">${tool.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                ${currentStep >= 5 ? `
+                    <div class="p-6 rounded-xl shadow-md" style="background-color: ${config.surface_color};">
+                        <h3 class="font-bold mb-4" style="font-size: ${baseFont * 1.2}px; font-family: ${fontStack}; color: ${config.secondary_action};">
+                            ⚠️ Sumber Error Eksperimen
+                        </h3>
+                        <div class="space-y-3">
+                            ${[
+                                {title: 'Kehilangan Kalor', desc: 'Kalor hilang ke lingkungan sekitar', impact: 'Sedang'},
+                                {title: 'Kalor Jenis Larutan', desc: 'Asumsi c = 4.18 J/g°C tidak selalu tepat', impact: 'Rendah'},
+                                {title: 'Pengadukan', desc: 'Pengadukan tidak sempurna', impact: 'Rendah'},
+                                {title: 'Pembacaan Suhu', desc: 'Kesalahan pembacaan termometer', impact: 'Rendah'},
+                                {title: 'Kapasitas Kalor', desc: 'Kalorimeter menyerap sebagian kalor', impact: 'Sedang'}
+                            ].map(error => `
+                                <div class="p-3 rounded-lg border-l-4 error-indicator" style="background-color: ${config.background_color}; border-color: ${error.impact === 'Sedang' ? '#f59e0b' : '#10b981'};">
+                                    <p class="font-semibold" style="font-size: ${baseFont * 0.85}px; font-family: ${fontStack}; color: ${config.text_color};">${error.title}</p>
+                                    <p style="font-size: ${baseFont * 0.75}px; font-family: ${fontStack}; color: ${config.text_color}; opacity: 0.7;">${error.desc}</p>
+                                    <span class="inline-block mt-1 px-2 py-1 rounded text-xs" style="background-color: ${error.impact === 'Sedang' ? '#fef3c7' : '#d1fae5'}; color: ${error.impact === 'Sedang' ? '#92400e' : '#065f46'};">
+                                        Dampak: ${error.impact}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function renderTemperatureChart(config, baseFont) {
+            if (experimentData.temperatureData.length === 0) {
+                return `
+                    <div class="flex items-center justify-center h-full" style="color: ${config.text_color}; opacity: 0.5;">
+                        <p style="font-family: ${config.font_family}; font-size: ${baseFont}px;">Mulai pengadukan untuk melihat grafik</p>
+                    </div>
+                `;
+            }
+            
+            const maxTemp = Math.max(...experimentData.temperatureData.map(d => d.temp), experimentData.tempInitial1 + 10);
+            const minTemp = Math.min(...experimentData.temperatureData.map(d => d.temp), experimentData.tempInitial1 - 10);
+            const tempRange = maxTemp - minTemp;
+            
+            const points = experimentData.temperatureData.map((d, i) => {
+                const x = 50 + (i / (experimentData.temperatureData.length - 1 || 1)) * 300;
+                const y = 250 - ((d.temp - minTemp) / tempRange) * 200;
+                return `${x},${y}`;
+            }).join(' ');
+            
+            return `
+                <svg viewBox="0 0 400 300" class="w-full h-full">
+                    <!-- Grid -->
+                    ${[0, 1, 2, 3, 4].map(i => `
+                        <line x1="50" y1="${50 + i * 50}" x2="350" y2="${50 + i * 50}" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="5,5"/>
+                        <text x="40" y="${55 + i * 50}" text-anchor="end" font-size="12" fill="${config.text_color}">
+                            ${(maxTemp - (i / 4) * tempRange).toFixed(1)}
+                        </text>
+                    `).join('')}
+                    
+                    <!-- Axes -->
+                    <line x1="50" y1="250" x2="350" y2="250" stroke="${config.text_color}" stroke-width="2"/>
+                    <line x1="50" y1="50" x2="50" y2="250" stroke="${config.text_color}" stroke-width="2"/>
+                    
+                    <!-- Data Line -->
+                    ${experimentData.temperatureData.length > 1 ? `
+                        <polyline points="${points}" fill="none" stroke="${config.primary_action}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        ${experimentData.temperatureData.map((d, i) => {
+                            const x = 50 + (i / (experimentData.temperatureData.length - 1)) * 300;
+                            const y = 250 - ((d.temp - minTemp) / tempRange) * 200;
+                            return `<circle cx="${x}" cy="${y}" r="4" fill="${config.secondary_action}"/>`;
+                        }).join('')}
+                    ` : ''}
+                    
+                    <!-- Labels -->
+                    <text x="200" y="280" text-anchor="middle" font-size="14" font-weight="bold" fill="${config.text_color}">
+                        Waktu (detik)
+                    </text>
+                    <text x="20" y="150" text-anchor="middle" font-size="14" font-weight="bold" fill="${config.text_color}" transform="rotate(-90 20 150)">
+                        Suhu (°C)
+                    </text>
+                </svg>
+            `;
+        }
+
+        function renderWorksheet(config, baseFont, fontStack) {
+            return `
+                <div class="mt-8 p-6 rounded-xl shadow-lg fade-in" style="background-color: ${config.surface_color}; animation-delay: 0.3s;">
+                    <h2 class="font-bold mb-6" style="font-size: ${baseFont * 1.5}px; font-family: ${fontStack}; color: ${config.primary_action};">
+                        📝 Lembar Kerja Praktikum Digital (LKPD)
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Observations Section -->
+                        <div class="worksheet-section p-5 rounded-lg" style="background-color: ${config.background_color};">
+                            <h3 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                1. Pengamatan
+                            </h3>
+                            <textarea id="observations" 
+                                      placeholder="Tuliskan pengamatan Anda: perubahan warna, suhu awal, suhu akhir, dll..."
+                                      class="w-full p-4 rounded-lg border-2 resize-none"
+                                      rows="4"
+                                      style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; border-color: ${config.primary_action}; background-color: ${config.surface_color}; color: ${config.text_color};"
+                                      oninput="updateWorksheet('observations', this.value)">${worksheetData.observations}</textarea>
+                        </div>
+                        
+                        <!-- Calculations Section -->
+                        <div class="worksheet-section p-5 rounded-lg" style="background-color: ${config.background_color};">
+                            <h3 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                2. Perhitungan Manual
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div class="calculation-box">
+                                    <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; color: ${config.text_color};">Langkah 1: Hitung massa total larutan</p>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: monospace; color: ${config.text_color};">
+                                        m = V_total × ρ <br>
+                                        m = ${experimentData.volume1 + experimentData.volume2} mL × 1 g/mL <br>
+                                        <strong>m = ${experimentData.volume1 + experimentData.volume2} g</strong>
+                                    </p>
+                                </div>
+                                
+                                <div class="calculation-box">
+                                    <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; color: ${config.text_color};">Langkah 2: Hitung perubahan suhu (ΔT)</p>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: monospace; color: ${config.text_color};">
+                                        ΔT = T_akhir - T_awal <br>
+                                        ΔT = ${experimentData.tempFinal.toFixed(2)}°C - ${experimentData.tempInitial1}°C <br>
+                                        <strong>ΔT = ${(experimentData.tempFinal - experimentData.tempInitial1).toFixed(2)}°C</strong>
+                                    </p>
+                                </div>
+                                
+                                <div class="calculation-box">
+                                    <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; color: ${config.text_color};">Langkah 3: Hitung kalor reaksi (q)</p>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: monospace; color: ${config.text_color};">
+                                        q = m × c × ΔT <br>
+                                        q = ${experimentData.volume1 + experimentData.volume2} g × 4.18 J/g°C × ${(experimentData.tempFinal - experimentData.tempInitial1).toFixed(2)}°C <br>
+                                        <strong>q = ${experimentData.results ? experimentData.results.q.toFixed(2) : '0'} J</strong>
+                                    </p>
+                                </div>
+                                
+                                <div class="calculation-box">
+                                    <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; color: ${config.text_color};">Langkah 4: Hitung mol pembatas</p>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: monospace; color: ${config.text_color};">
+                                        n₁ = V₁ × M₁ = ${experimentData.volume1/1000} L × ${experimentData.concentration1} M = ${((experimentData.volume1/1000) * experimentData.concentration1).toFixed(4)} mol <br>
+                                        n₂ = V₂ × M₂ = ${experimentData.volume2/1000} L × ${experimentData.concentration2} M = ${((experimentData.volume2/1000) * experimentData.concentration2).toFixed(4)} mol <br>
+                                        <strong>n_pembatas = ${experimentData.results ? experimentData.results.mol.toFixed(4) : '0'} mol</strong>
+                                    </p>
+                                </div>
+                                
+                                <div class="calculation-box ${experimentData.results ? 'result-correct' : ''}">
+                                    <p class="font-semibold mb-2" style="font-size: ${baseFont * 0.9}px; color: ${config.text_color};">Langkah 5: Hitung ΔH reaksi</p>
+                                    <p style="font-size: ${baseFont * 0.85}px; font-family: monospace; color: ${config.text_color};">
+                                        ΔH = ${reactions[experimentData.reactionType].type === 'eksoterm' ? '-' : '+'}q / n <br>
+                                        ΔH = ${reactions[experimentData.reactionType].type === 'eksoterm' ? '-' : '+'}${experimentData.results ? experimentData.results.q.toFixed(2) : '0'} J / ${experimentData.results ? experimentData.results.mol.toFixed(4) : '0'} mol <br>
+                                        ΔH = ${experimentData.results ? (experimentData.results.deltaH * 1000).toFixed(2) : '0'} J/mol <br>
+                                        <strong class="text-xl">ΔH = ${experimentData.results ? experimentData.results.deltaH.toFixed(2) : '0'} kJ/mol</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Reflections Section -->
+                        <div class="worksheet-section p-5 rounded-lg" style="background-color: ${config.background_color};">
+                            <h3 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                3. Refleksi & Kesimpulan
+                            </h3>
+                            <textarea id="reflections" 
+                                      placeholder="Tuliskan kesimpulan Anda: apakah reaksi eksoterm/endoterm? Bandingkan hasil dengan teori. Apa sumber error yang mungkin terjadi?"
+                                      class="w-full p-4 rounded-lg border-2 resize-none"
+                                      rows="5"
+                                      style="font-family: ${fontStack}; font-size: ${baseFont * 0.9}px; border-color: ${config.primary_action}; background-color: ${config.surface_color}; color: ${config.text_color};"
+                                      oninput="updateWorksheet('reflections', this.value)">${worksheetData.reflections}</textarea>
+                        </div>
+                        
+                        <!-- Auto Feedback -->
+                        ${experimentData.results ? `
+                            <div class="p-5 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_action}20 0%, ${config.secondary_action}20 100%); border: 2px solid ${config.primary_action};">
+                                <h3 class="font-bold mb-3" style="font-size: ${baseFont * 1.1}px; font-family: ${fontStack}; color: ${config.primary_action};">
+                                    🤖 Umpan Balik Otomatis
+                                </h3>
+                                <div class="space-y-2" style="font-size: ${baseFont * 0.9}px; font-family: ${fontStack}; color: ${config.text_color};">
+                                    <p>✅ <strong>Perhitungan ΔT:</strong> ${(experimentData.tempFinal - experimentData.tempInitial1).toFixed(2)}°C - Benar!</p>
+                                    <p>✅ <strong>Perhitungan q:</strong> ${experimentData.results.q.toFixed(2)} J - Benar!</p>
+                                    <p>✅ <strong>Perhitungan ΔH:</strong> ${experimentData.results.deltaH.toFixed(2)} kJ/mol - Benar!</p>
+                                    <p class="${experimentData.results.error < 10 ? 'text-green-700' : experimentData.results.error < 20 ? 'text-yellow-700' : 'text-red-700'}">
+                                        ${experimentData.results.error < 10 ? '⭐' : experimentData.results.error < 20 ? '✓' : '⚠️'} 
+                                        <strong>Akurasi:</strong> Error ${experimentData.results.error.toFixed(2)}% 
+                                        ${experimentData.results.error < 10 ? '(Sangat Baik!)' : 
+                                          experimentData.results.error < 20 ? '(Cukup Baik)' : 
+                                          '(Perlu Perbaikan)'}
+                                    </p>
+                                    <p class="mt-3 p-3 rounded" style="background-color: ${config.background_color};">
+                                        💡 <strong>Saran:</strong> ${
+                                            experimentData.results.error < 10 ? 
+                                            'Hasil eksperimen Anda sangat akurat! Prosedur telah dilakukan dengan baik.' :
+                                            experimentData.results.error < 20 ?
+                                            'Hasil cukup baik. Perhatikan pengadukan dan pembacaan suhu untuk meningkatkan akurasi.' :
+                                            'Error cukup besar. Periksa kembali: (1) Pengadukan merata, (2) Pembacaan termometer akurat, (3) Minimalisir kehilangan kalor.'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function adjustBrightness(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+                (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+                .toString(16).slice(1);
+        }
+
+        function selectReaction(reactionType) {
+            experimentData.reactionType = reactionType;
+            render();
+        }
+
+        function updateParameter(param, value) {
+            experimentData[param] = parseFloat(value);
+            document.getElementById(`${param}Display`).textContent = value;
+        }
+
+        function nextStep() {
+            if (currentStep < 5) {
+                if (currentStep === 3 && (!experimentData.liquid1Poured || !experimentData.liquid2Poured)) {
+                    showNotification('⚠️ Tuang kedua larutan terlebih dahulu!', 'error');
+                    return;
+                }
+                if (currentStep === 4 && experimentData.tempFinal === 0) {
+                    showNotification('⚠️ Lakukan pengadukan dan tunggu hingga suhu stabil!', 'error');
+                    return;
+                }
+                currentStep++;
+                render();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                render();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function pourLiquid(liquidNum) {
+            if (liquidNum === 1 && !experimentData.liquid1Poured) {
+                experimentData.liquid1Poured = true;
+                showNotification(`✅ ${reactions[experimentData.reactionType].reactant1} dituang ke kalorimeter`, 'success');
+                render();
+            } else if (liquidNum === 2 && !experimentData.liquid2Poured) {
+                experimentData.liquid2Poured = true;
+                showNotification(`✅ ${reactions[experimentData.reactionType].reactant2} dituang ke kalorimeter`, 'success');
+                render();
+            }
+        }
+
+        function startStirring() {
+            if (experimentData.isStirring) return;
+            
+            experimentData.isStirring = true;
+            experimentData.startTime = Date.now();
+            experimentData.temperatureData = [];
+            render();
+            
+            const reaction = reactions[experimentData.reactionType];
+            const mol1 = (experimentData.volume1 / 1000) * experimentData.concentration1;
+            const mol2 = (experimentData.volume2 / 1000) * experimentData.concentration2;
+            const molPembatas = Math.min(mol1, mol2);
+            
+            const totalMass = experimentData.volume1 + experimentData.volume2;
+            const c = 4.18;
+            
+            let targetDeltaT;
+            if (reaction.type === 'eksoterm') {
+                targetDeltaT = (Math.abs(reaction.expectedDH) * molPembatas * 1000) / (totalMass * c);
+            } else {
+                targetDeltaT = -(Math.abs(reaction.expectedDH) * molPembatas * 1000) / (totalMass * c);
+            }
+            
+            const targetTemp = experimentData.tempInitial1 + targetDeltaT;
+            
+            let time = 0;
+            const interval = setInterval(() => {
+                time += 0.5;
+                
+                const progress = Math.min(time / 15, 1);
+                const easedProgress = 1 - Math.pow(1 - progress, 3);
+                const currentTemp = experimentData.tempInitial1 + (targetDeltaT * easedProgress);
+                
+                experimentData.temperatureData.push({
+                    time: time,
+                    temp: currentTemp
+                });
+                
+                if (time >= 15) {
+                    clearInterval(interval);
+                    experimentData.isStirring = false;
+                    experimentData.tempFinal = targetTemp;
+                    
+                    const q = totalMass * c * Math.abs(targetDeltaT);
+                    const deltaH = reaction.type === 'eksoterm' ? -(q / molPembatas / 1000) : (q / molPembatas / 1000);
+                    const error = Math.abs(((deltaH - reaction.expectedDH) / reaction.expectedDH) * 100);
+                    
+                    experimentData.results = {
+                        mass: totalMass,
+                        deltaT: targetDeltaT,
+                        q: q,
+                        mol: molPembatas,
+                        deltaH: deltaH,
+                        error: error
+                    };
+                    
+                    showNotification('✅ Pengadukan selesai! Suhu telah stabil.', 'success');
+                    render();
+                } else {
+                    render();
+                }
+            }, 500);
+        }
+
+        function updateWorksheet(field, value) {
+            worksheetData[field] = value;
+        }
+
+        function resetExperiment() {
+            const confirmReset = document.createElement('div');
+            confirmReset.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+            confirmReset.innerHTML = `
+                <div class="bg-white rounded-xl p-8 max-w-md shadow-2xl">
+                    <h3 class="text-xl font-bold mb-4" style="color: ${(window.elementSdk?.config || defaultConfig).text_color};">
+                        🔄 Ulangi Eksperimen?
+                    </h3>
+                    <p class="mb-6" style="color: ${(window.elementSdk?.config || defaultConfig).text_color};">
+                        Data eksperimen saat ini akan direset. Pastikan Anda sudah menyimpan hasil jika diperlukan.
+                    </p>
+                    <div class="flex gap-3">
+                        <button onclick="this.closest('.fixed').remove()" class="flex-1 py-2 px-4 rounded-lg font-bold" 
+                                style="background-color: ${(window.elementSdk?.config || defaultConfig).background_color}; color: ${(window.elementSdk?.config || defaultConfig).text_color}; border: 2px solid ${(window.elementSdk?.config || defaultConfig).primary_action};">
+                            Batal
+                        </button>
+                        <button onclick="confirmReset()" class="flex-1 py-2 px-4 rounded-lg font-bold text-white" 
+                                style="background-color: ${(window.elementSdk?.config || defaultConfig).primary_action};">
+                            Ya, Reset
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmReset);
+        }
+
+        function confirmReset() {
+            currentStep = 1;
+            experimentData = {
+                reactionType: 'netralisasi',
+                volume1: 50,
+                volume2: 50,
+                concentration1: 1.0,
+                concentration2: 1.0,
+                tempInitial1: 25,
+                tempInitial2: 25,
+                tempFinal: 0,
+                isRunning: false,
+                isPoured: false,
+                isStirring: false,
+                liquid1Poured: false,
+                liquid2Poured: false,
+                results: null,
+                temperatureData: [],
+                startTime: 0
+            };
+            worksheetData = {
+                observations: '',
+                calculations: '',
+                reflections: '',
+                errors_identified: []
+            };
+            document.querySelector('.fixed.inset-0').remove();
+            render();
+            showNotification('🔄 Eksperimen direset. Mulai praktikum baru!', 'info');
+        }
+
+        function attachEventListeners() {
+            // Event listeners are attached via onclick attributes
+        }
+
+        async function onConfigChange(config) {
+            render();
+        }
+
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig,
+                onConfigChange,
+                mapToCapabilities: (config) => ({
+                    recolorables: [
+                        {
+                            get: () => config.background_color || defaultConfig.background_color,
+                            set: (value) => {
+                                config.background_color = value;
+                                window.elementSdk.setConfig({ background_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.surface_color || defaultConfig.surface_color,
+                            set: (value) => {
+                                config.surface_color = value;
+                                window.elementSdk.setConfig({ surface_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.text_color || defaultConfig.text_color,
+                            set: (value) => {
+                                config.text_color = value;
+                                window.elementSdk.setConfig({ text_color: value });
+                            }
+                        },
+                        {
+                            get: () => config.primary_action || defaultConfig.primary_action,
+                            set: (value) => {
+                                config.primary_action = value;
+                                window.elementSdk.setConfig({ primary_action: value });
+                            }
+                        },
+                        {
+                            get: () => config.secondary_action || defaultConfig.secondary_action,
+                            set: (value) => {
+                                config.secondary_action = value;
+                                window.elementSdk.setConfig({ secondary_action: value });
+                            }
+                        }
+                    ],
+                    borderables: [],
+                    fontEditable: {
+                        get: () => config.font_family || defaultConfig.font_family,
+                        set: (value) => {
+                            config.font_family = value;
+                            window.elementSdk.setConfig({ font_family: value });
+                        }
+                    },
+                    fontSizeable: {
+                        get: () => config.font_size || defaultConfig.font_size,
+                        set: (value) => {
+                            config.font_size = value;
+                            window.elementSdk.setConfig({ font_size: value });
+                        }
+                    }
+                }),
+                mapToEditPanelValues: (config) => new Map([
+                    ["lab_title", config.lab_title || defaultConfig.lab_title],
+                    ["institution_name", config.institution_name || defaultConfig.institution_name],
+                    ["instruction_text", config.instruction_text || defaultConfig.instruction_text]
+                ])
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initDataSdk();
+            render();
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9aec33cc7457a8e7',t:'MTc2NTg2NzM2My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
         
         quizCard.innerHTML = `
           <h4 class="text-lg font-bold text-gray-800 mb-4">Soal ${index + 1}</h4>
